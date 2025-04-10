@@ -1,9 +1,10 @@
 [tool.poetry]
-name = "projeto-space"
+name = "spacedex"
 version = "0.1.0"
-description = ""
-authors = ["Victor Barradas Soares Doliveira"]
+description = "Classificador de objetos astronômicos"
+authors = ["Victor Barradas Soares Doliveira doliveiraeg@hotmail.com"]
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.12"
