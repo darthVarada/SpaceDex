@@ -1,79 +1,97 @@
-import streamlit as st
 import pandas as pd
 import numpy as np
+import streamlit as st
 import requests
 from PIL import Image
 from io import BytesIO
-import pickle
+from sklearn.ensemble import RandomForestClassifier
 
-# ========== CONFIGURAÇÃO ==========
-st.set_page_config(page_title="SpaceDEX Game", layout="centered")
-st.title("🧠 SpaceDEX — Quem é esse Objeto?!")
+# ========== CONFIGURAÇÕES ========== 
+st.set_page_config(page_title="SpaceDEX Game", layout="wide")
+st.title("🧐 SpaceDEX — Quem é esse Objeto?!")
 st.markdown("Tente adivinhar qual tipo de objeto é esse com base em suas características!")
 
-# ========== CARREGAMENTO ==========
-with open("random_forest_model.pkl", "rb") as f:
-    rf = pickle.load(f)
+# ========== FUNÇÕES DE CACHED ========== 
+@st.cache_data(show_spinner="🔭 Carregando dados...")
+def carregar_dados():
+    return pd.read_csv("star_classification.csv")
 
-df = pd.read_csv("star_classification.csv")
+@st.cache_resource
+def carregar_modelo():
+    df = carregar_dados()
+    X = df[feature_cols]
+    y = df[target_col]
+    model = RandomForestClassifier(n_estimators=100, random_state=42)
+    model.fit(X, y)
+    return model
+
+@st.cache_data(show_spinner="🔭 Baixando imagem...")
+def carregar_imagem(ra, dec):
+    url = f"http://skyserver.sdss.org/dr16/SkyServerWS/ImgCutout/getjpeg?ra={ra}&dec={dec}&scale=0.15&width=250&height=250"
+    response = requests.get(url, timeout=5)
+    return Image.open(BytesIO(response.content))
+
+# ========== VARIÁVEIS GLOBAIS ========== 
 feature_cols = ['u', 'g', 'r', 'i', 'z', 'redshift']
-target_names = {0: 'GALAXY', 1: 'STAR', 2: 'QSO'}
-target_options = list(target_names.values())
+target_col = 'class'
+df = carregar_dados()
+target_options = df[target_col].unique()
+rf = carregar_modelo()
 
-# ========== INICIALIZA ESTADO ==========
-if 'amostra' not in st.session_state:
-    st.session_state.amostra = None
-    st.session_state.pred_real = None
+# ========== SESSION STATE ========== 
+if "linha" not in st.session_state:
+    st.session_state.linha = df.sample(1).iloc[0]
     st.session_state.show_feedback = False
 
-# ========== NOVA AMOSTRA ==========
+# ========== FUNÇÃO NOVA AMOSTRA ========== 
 def nova_amostra():
-    linha = df.sample(n=1).iloc[0]
-    st.session_state.amostra = linha
-    X_input = pd.DataFrame([linha[feature_cols]])
-    pred = rf.predict(X_input)[0]
-    st.session_state.pred_real = target_names[pred]
+    st.session_state.linha = df.sample(1).iloc[0]
     st.session_state.show_feedback = False
 
-# ========== BOTÃO NOVA AMOSTRA ==========
-if st.button("🔁 Nova Amostragem"):
-    nova_amostra()
-
-# Primeira vez
-if st.session_state.amostra is None:
-    nova_amostra()
-
-linha = st.session_state.amostra
-pred_real = st.session_state.pred_real
-
-# ========== MOSTRA IMAGEM ==========
+# ========== AMOSTRA ATUAL ========== 
+linha = st.session_state.linha
 ra, dec = linha['alpha'], linha['delta']
-url = f"http://skyserver.sdss.org/dr16/SkyServerWS/ImgCutout/getjpeg?ra={ra}&dec={dec}&scale=0.2&width=300&height=300"
-try:
-    response = requests.get(url)
-    img = Image.open(BytesIO(response.content))
-    st.image(img, caption="🔭 Objeto Espacial")
-except:
-    st.warning("Imagem não disponível no momento.")
+X_input = pd.DataFrame([linha[feature_cols]])
+pred_real = rf.predict(X_input)[0]
 
-# ========== EXIBE INFO ==========
-with st.expander("📊 Informações do Objeto"):
-    st.write(f"**RA**: {ra:.2f}")
-    st.write(f"**DEC**: {dec:.2f}")
-    for col in feature_cols:
-        st.write(f"**{col.upper()}**: {linha[col]:.3f}")
+# ========== LAYOUT: IMAGEM E INFO ========== 
+col1, col2 = st.columns([1.2, 1])
 
-# ========== APOSTA DO USUÁRIO ==========
-st.markdown("## 💡 Qual é esse objeto?")
-resposta = st.selectbox("Selecione uma classe:", target_options, key="resposta")
+with col1:
+    st.subheader("🔭 Visualização do Objeto")
+    try:
+        img = carregar_imagem(ra, dec)
+        st.image(img, caption="Imagem capturada pelo SDSS")
+    except:
+        st.warning("Imagem não disponível.")
 
-if st.button("Verificar"):
-    st.session_state.show_feedback = True
+with col2:
+    st.subheader("📊 Informações do Objeto")
+    st.markdown(f"- **RA** (ascensão reta): `{ra:.2f}`")
+    st.markdown(f"- **DEC** (declinação): `{dec:.2f}`")
+    st.markdown(f"- **Redshift**: `{linha['redshift']:.4f}`")
+    st.markdown("**Magnitudes:**")
+    for col in feature_cols[:-1]:
+        st.markdown(f"- `{col.upper()}`: {linha[col]:.2f}")
 
-# ========== FEEDBACK ==========
+# ========== INTERAÇÃO ========== 
+st.markdown("---")
+st.subheader("💡 Qual é esse objeto?")
+resposta = st.selectbox("Escolha a classe:", target_options, key="resposta")
+
+col_verif, col_reset = st.columns([1, 1])
+with col_verif:
+    if st.button("✅ Verificar"):
+        st.session_state.show_feedback = True
+
+with col_reset:
+    if st.button("🔁 Nova Amostragem"):
+        nova_amostra()
+
+# ========== FEEDBACK ========== 
 if st.session_state.show_feedback:
     if resposta == pred_real:
         st.success(f"✅ Correto! Era um **{pred_real}**!")
+        st.balloons()
     else:
-        st.error(f"❌ Ops! Era **{pred_real}**...")
-
+        st.error(f"❌ Não era... A resposta certa era **{pred_real}**.")
