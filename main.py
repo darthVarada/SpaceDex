@@ -6,6 +6,10 @@ from PIL import Image
 from io import BytesIO
 from sklearn.ensemble import RandomForestClassifier
 
+### ========== rodar localmente ==========
+
+#poetry run streamlit run main.py
+
 # ========== CONFIGURAÇÕES ========== 
 st.set_page_config(page_title="SpaceDEX Game", layout="wide")
 st.title("🧐 SpaceDEX — Quem é esse Objeto?!")
