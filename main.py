@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 import streamlit as st
 import requests
+import time
 from PIL import Image
 from io import BytesIO
 from sklearn.ensemble import RandomForestClassifier
@@ -81,21 +82,25 @@ with col2:
 # ========== INTERAÇÃO ========== 
 st.markdown("---")
 st.subheader("💡 Qual é esse objeto?")
-resposta = st.selectbox("Escolha a classe:", target_options, key="resposta")
 
-col_verif, col_reset = st.columns([1, 1])
-with col_verif:
-    if st.button("✅ Verificar"):
-        st.session_state.show_feedback = True
+st.selectbox("Escolha a classe:", target_options, key="resposta")
 
-with col_reset:
-    if st.button("🔁 Nova Amostragem"):
-        nova_amostra()
+if st.button("✅ Verificar", key="verificar"):
+    st.session_state.user_choice = st.session_state.resposta
+    st.session_state.show_feedback = True
 
-# ========== FEEDBACK ========== 
+# ========== FEEDBACK COM DELAY E REFRESH ========== 
 if st.session_state.show_feedback:
-    if resposta == pred_real:
+    if st.session_state.user_choice == pred_real:
         st.success(f"✅ Correto! Era um **{pred_real}**!")
         st.balloons()
     else:
         st.error(f"❌ Não era... A resposta certa era **{pred_real}**.")
+
+    st.markdown("⏳ Gerando nova amostragem...")
+    time.sleep(1)
+
+    # Reset e rerun
+    st.session_state.linha = df.sample(1).iloc[0]
+    st.session_state.show_feedback = False
+    st.rerun()
