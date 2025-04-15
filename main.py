@@ -77,46 +77,42 @@ ra, dec = linha['alpha'], linha['delta']
 X_input = pd.DataFrame([linha[feature_cols]])
 pred_real = rf.predict(X_input)[0]
 
-# ========== LAYOUT ========== 
-with st.container():
-    col1, col2 = st.columns([1.2, 1.8])
+# ========== LAYOUT ==========
+if not st.session_state.show_feedback:
+    with st.container():
+        col1, col2 = st.columns([1.2, 1.8])
 
-    # Coluna da imagem e dados
-    with col1:
-        st.subheader("🔭 Visualização do Objeto + Dados")
+        with col1:
+            st.subheader("🔭 Visualização do Objeto + Dados")
+            col_img, col_info = st.columns([1, 1.2])
 
-        # Subcolunas: Imagem e Info
-        col_img, col_info = st.columns([1, 1.2])
+            with col_img:
+                try:
+                    img = carregar_imagem(ra, dec)
+                    st.image(img, caption="Imagem capturada pelo SDSS")
+                except:
+                    st.warning("Imagem não disponível.")
 
-        with col_img:
-            try:
-                img = carregar_imagem(ra, dec)
-                st.image(img, caption="Imagem capturada pelo SDSS")
-            except:
-                st.warning("Imagem não disponível.")
+            with col_info:
+                st.markdown(f"- **RA** (ascensão reta): `{ra:.2f}`")
+                st.markdown(f"- **DEC** (declinação): `{dec:.2f}`")
+                st.markdown(f"- **Redshift**: `{linha['redshift']:.4f}`")
+                st.markdown("**Magnitudes:**")
+                for col in feature_cols[:-1]:
+                    st.markdown(f"- `{col.upper()}`: {linha[col]:.2f}")
 
-        with col_info:
-            st.markdown(f"- **RA** (ascensão reta): `{ra:.2f}`")
-            st.markdown(f"- **DEC** (declinação): `{dec:.2f}`")
-            st.markdown(f"- **Redshift**: `{linha['redshift']:.4f}`")
-            st.markdown("**Magnitudes:**")
-            for col in feature_cols[:-1]:
-                st.markdown(f"- `{col.upper()}`: {linha[col]:.2f}")
+        with col2:
+            st.subheader("📊 Guia Visual")
+            col_g1, col_g2, col_g3 = st.columns(3)
 
+            with col_g1:
+                st.image("assets/exemplo_galaxy.jpg", caption="🌌 GALAXY", use_container_width=True)
+            with col_g2:
+                st.image("assets/exemplo_star.png", caption="⭐ STAR", use_container_width=True)
+            with col_g3:
+                st.image("assets/exemplo_qso.jpg", caption="✨ QSO", use_container_width=True)
 
-    # Coluna da referência visual
-    with col2:
-        st.subheader("📚 Guia Visual")
-        col_g1, col_g2, col_g3 = st.columns(3)
-
-        with col_g1:
-            st.image("assets/exemplo_galaxy.jpg", caption="🌌 GALAXY", use_container_width=True)
-        with col_g2:
-            st.image("assets/exemplo_star.png", caption="⭐ STAR", use_container_width=True)
-        with col_g3:
-            st.image("assets/exemplo_qso.jpg", caption="✨ QSO", use_container_width=True)
-
-# ========== INTERAÇÃO ==========
+# ========== INTERAÇÃO ========== 
 st.markdown("---")
 st.subheader("💡 Qual é esse objeto?")
 st.selectbox("Escolha a classe:", target_options, key="resposta")
@@ -125,7 +121,7 @@ if st.button("✅ Verificar", key="verificar"):
     st.session_state.user_choice = st.session_state.resposta
     st.session_state.show_feedback = True
 
-# ========== FEEDBACK ==========
+# ========== FEEDBACK ========== 
 if st.session_state.show_feedback:
     resposta = st.session_state.user_choice
     if resposta == pred_real:
