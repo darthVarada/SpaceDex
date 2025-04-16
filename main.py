@@ -14,7 +14,8 @@ from sklearn.ensemble import RandomForestClassifier
 # ========== CONFIGURAÇÕES ==========
 st.set_page_config(page_title="SpaceDEX Game", layout="wide")
 st.title("🧐 SpaceDEX — Qual é esse Objeto?!")
-st.markdown("Tente adivinhar qual tipo de objeto é esse com base em suas características!")
+st.markdown("""Um modelo de IA já tem uma resposta... será que você acerta também?
+Analise os dados astronômicos e tente descobrir que tipo de objeto é esse — uma estrela, galáxia ou quasar?""")
 
 # ========== INICIALIZA VARIÁVEIS DE ESTADO ==========
 if "linha" not in st.session_state:
