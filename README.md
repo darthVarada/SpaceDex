@@ -44,7 +44,7 @@ O modelo usa **Random Forest** treinado com dados reais do SDSS. As features inc
 
 ```bash
 # Clone o repositório
-git clone https://github.com/seuusuario/spacedex.git
+git clone https://github.com/darthVarada/SpaceDex.git
 cd spacedex
 
 # Instale as dependências
