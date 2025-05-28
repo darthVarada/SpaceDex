@@ -14,7 +14,7 @@ Transformar aprendizado de astronomia e IA em uma experiência interativa e dive
 ## 🌐 Demo Online
 
 Acesse a aplicação:  
-🔗 [SpaceDEX - Streamlit Cloud]([https://darthvarada-spacedex-main-rmxzjf.streamlit.app/])
+🔗 [SpaceDEX - Streamlit Cloud](https://darthvarada-spacedex-main-rmxzjf.streamlit.app/)
 
 ---
 
@@ -70,7 +70,7 @@ poetry run streamlit run main.py
 ## 👨‍💻 Autor
 
 Desenvolvido por **Victor Barradas**  
-🔗 [LinkedIn]([https://www.linkedin.com/in/victor-barradas/]) | 🐙 [GitHub]([https://github.com/darthVarada])
+🔗 [LinkedIn](https://www.linkedin.com/in/victor-barradas/) | 🐙 [GitHub](https://github.com/darthVarada)
 
 ---
 
